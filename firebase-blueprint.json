@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "UserPreferences": {
+      "title": "UserPreferences",
+      "description": "User playback and audio language priority preferences.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "audioPriority": { "type": "array", "description": "Ordered ISO language codes for automatic audio track selection (e.g., hi, pa, en)." },
+        "autoAudioEnabled": { "type": "boolean", "description": "Whether automatic audio language selection is active." },
+        "preferHardwareDecoder": { "type": "boolean", "description": "Whether hardware video decoding is preferred." },
+        "defaultPlayerResizeMode": { "type": "string", "enum": ["FIT", "FILL", "ZOOM"], "description": "Default ExoPlayer video aspect/resize mode." },
+        "watchHistoryEnabled": { "type": "boolean", "description": "Whether new watch history and playback progress are recorded." },
+        "showFavouriteLiveChannelsFirst": { "type": "boolean", "description": "Whether Live TV displays favourite channels first." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when created." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp when last updated." }
+      },
+      "required": ["userId", "audioPriority", "autoAudioEnabled", "preferHardwareDecoder", "defaultPlayerResizeMode", "createdAt", "updatedAt"]
+    },
+    "CategoryVisibility": {
+      "title": "CategoryVisibility",
+      "description": "Hidden category IDs per IPTV playlist.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "playlistId": { "type": "string", "description": "IPTV playlist identifier." },
+        "liveCategoryIds": { "type": "array", "description": "Hidden Live TV category IDs." },
+        "movieCategoryIds": { "type": "array", "description": "Hidden Movie category IDs." },
+        "seriesCategoryIds": { "type": "array", "description": "Hidden TV Series category IDs." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when created." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp when last updated." }
+      },
+      "required": ["userId", "playlistId", "liveCategoryIds", "movieCategoryIds", "seriesCategoryIds", "createdAt", "updatedAt"]
+    },
+    "FavouriteItem": {
+      "title": "FavouriteItem",
+      "description": "A user's favourited Live TV channel, movie, or series.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "itemId": { "type": "string", "description": "Provider stream or series ID." },
+        "contentType": { "type": "string", "enum": ["LIVE", "MOVIE", "SERIES"], "description": "Type of media item." },
+        "title": { "type": "string", "description": "Display title or channel name." },
+        "posterUrl": { "type": "string", "description": "Channel logo or poster artwork URL." },
+        "categoryName": { "type": "string", "description": "Category label." },
+        "streamUrl": { "type": "string", "description": "Resolved or template stream URL." },
+        "playlistId": { "type": "string", "description": "Identifier of the originating playlist." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when created." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp when last updated." }
+      },
+      "required": ["userId", "itemId", "contentType", "title", "posterUrl", "categoryName", "streamUrl", "playlistId", "createdAt", "updatedAt"]
+    },
+    "ContinueWatchingItem": {
+      "title": "ContinueWatchingItem",
+      "description": "Playback progress entry for resuming movies, episodes, or recent live channels.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "itemId": { "type": "string", "description": "Provider stream or episode ID." },
+        "contentType": { "type": "string", "enum": ["MOVIE", "EPISODE", "LIVE"], "description": "Media type." },
+        "title": { "type": "string", "description": "Display title." },
+        "subtitle": { "type": "string", "description": "Episode or channel subtitle." },
+        "posterUrl": { "type": "string", "description": "Poster or logo URL." },
+        "streamUrl": { "type": "string", "description": "Stream URL." },
+        "playlistId": { "type": "string", "description": "Playlist identifier." },
+        "seriesId": { "type": "string", "description": "Parent series ID if episode." },
+        "seasonNumber": { "type": "integer", "description": "Season index for series episodes." },
+        "episodeNumber": { "type": "integer", "description": "Episode index for series episodes." },
+        "positionMs": { "type": "integer", "description": "Last playback position in milliseconds." },
+        "durationMs": { "type": "integer", "description": "Total duration in milliseconds." },
+        "preferredAudioLang": { "type": "string", "description": "Last manually selected audio language code if overridden." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when created." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp when last updated." }
+      },
+      "required": ["userId", "itemId", "contentType", "title", "subtitle", "posterUrl", "streamUrl", "playlistId", "seriesId", "seasonNumber", "episodeNumber", "positionMs", "durationMs", "preferredAudioLang", "createdAt", "updatedAt"]
+    },
+    "WatchHistoryItem": {
+      "title": "WatchHistoryItem",
+      "description": "Chronological watch history entry for a user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "itemId": { "type": "string", "description": "Provider stream or episode ID." },
+        "contentType": { "type": "string", "enum": ["LIVE", "MOVIE", "EPISODE"], "description": "Media type." },
+        "title": { "type": "string", "description": "Display title." },
+        "subtitle": { "type": "string", "description": "Subtitle or category." },
+        "posterUrl": { "type": "string", "description": "Poster or logo URL." },
+        "playlistId": { "type": "string", "description": "Playlist identifier." },
+        "watchedAt": { "type": "string", "format": "date-time", "description": "Server timestamp of watch event." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when created." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp when last updated." }
+      },
+      "required": ["userId", "itemId", "contentType", "title", "subtitle", "posterUrl", "playlistId", "watchedAt", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/preferences/{prefId}": {
+      "schema": { "$ref": "#/entities/UserPreferences" },
+      "description": "User-scoped playback and audio language preferences."
+    },
+    "/users/{userId}/categoryVisibility/{docId}": {
+      "schema": { "$ref": "#/entities/CategoryVisibility" },
+      "description": "User-scoped per-playlist hidden category IDs."
+    },
+    "/users/{userId}/favourites/{favId}": {
+      "schema": { "$ref": "#/entities/FavouriteItem" },
+      "description": "User-scoped favourited channels, movies, and series."
+    },
+    "/users/{userId}/continueWatching/{progressId}": {
+      "schema": { "$ref": "#/entities/ContinueWatchingItem" },
+      "description": "User-scoped resume playback progress."
+    },
+    "/users/{userId}/watchHistory/{historyId}": {
+      "schema": { "$ref": "#/entities/WatchHistoryItem" },
+      "description": "User-scoped watch history."
+    }
+  }
+}

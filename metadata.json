@@ -1,0 +1,8 @@
+{
+  "name": " UH IPTV",
+  "description": "Native Android IPTV player with Xtream Codes login, M3U playlists, Media3 ExoPlayer, automatic audio language selection, and Firebase sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

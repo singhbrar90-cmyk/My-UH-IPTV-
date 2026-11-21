@@ -1,0 +1,172 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidUserPreferences(data) {
+      return data.userId is string && data.userId == request.auth.uid && data.userId.size() <= 128 &&
+             data.audioPriority is list && data.audioPriority.size() >= 1 && data.audioPriority.size() <= 5 &&
+             data.audioPriority[0] is string && data.audioPriority[0].size() <= 16 &&
+             data.autoAudioEnabled is bool &&
+             data.preferHardwareDecoder is bool &&
+             data.defaultPlayerResizeMode is string && data.defaultPlayerResizeMode in ['FIT', 'FILL', 'ZOOM'] &&
+             (!('watchHistoryEnabled' in data) || data.watchHistoryEnabled is bool) &&
+             (!('showFavouriteLiveChannelsFirst' in data) || data.showFavouriteLiveChannelsFirst is bool) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidCategoryVisibility(data) {
+      return data.userId is string && data.userId == request.auth.uid && data.userId.size() <= 128 &&
+             data.playlistId is string && data.playlistId.size() >= 1 && data.playlistId.size() <= 128 &&
+             data.liveCategoryIds is list && data.liveCategoryIds.size() <= 1000 &&
+             data.movieCategoryIds is list && data.movieCategoryIds.size() <= 1000 &&
+             data.seriesCategoryIds is list && data.seriesCategoryIds.size() <= 1000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidFavourite(data) {
+      return data.userId is string && data.userId == request.auth.uid && data.userId.size() <= 128 &&
+             data.itemId is string && data.itemId.size() >= 1 && data.itemId.size() <= 160 &&
+             data.contentType is string && data.contentType in ['LIVE', 'MOVIE', 'SERIES'] &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+             data.posterUrl is string && data.posterUrl.size() <= 1000 &&
+             data.categoryName is string && data.categoryName.size() <= 150 &&
+             data.streamUrl is string && data.streamUrl.size() <= 2000 &&
+             data.playlistId is string && data.playlistId.size() <= 128 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidContinueWatching(data) {
+      return data.userId is string && data.userId == request.auth.uid && data.userId.size() <= 128 &&
+             data.itemId is string && data.itemId.size() >= 1 && data.itemId.size() <= 160 &&
+             data.contentType is string && data.contentType in ['MOVIE', 'EPISODE', 'LIVE'] &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+             data.subtitle is string && data.subtitle.size() <= 200 &&
+             data.posterUrl is string && data.posterUrl.size() <= 1000 &&
+             data.streamUrl is string && data.streamUrl.size() <= 2000 &&
+             data.playlistId is string && data.playlistId.size() <= 128 &&
+             data.seriesId is string && data.seriesId.size() <= 160 &&
+             data.seasonNumber is int && data.seasonNumber >= 0 && data.seasonNumber <= 500 &&
+             data.episodeNumber is int && data.episodeNumber >= 0 && data.episodeNumber <= 5000 &&
+             data.positionMs is int && data.positionMs >= 0 &&
+             data.durationMs is int && data.durationMs >= 0 &&
+             data.preferredAudioLang is string && data.preferredAudioLang.size() <= 32 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidWatchHistory(data) {
+      return data.userId is string && data.userId == request.auth.uid && data.userId.size() <= 128 &&
+             data.itemId is string && data.itemId.size() >= 1 && data.itemId.size() <= 160 &&
+             data.contentType is string && data.contentType in ['LIVE', 'MOVIE', 'EPISODE'] &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+             data.subtitle is string && data.subtitle.size() <= 200 &&
+             data.posterUrl is string && data.posterUrl.size() <= 1000 &&
+             data.playlistId is string && data.playlistId.size() <= 128 &&
+             data.watchedAt is timestamp && data.watchedAt <= request.time &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId}/preferences/{prefId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(prefId);
+      allow create: if isOwner(userId) && isValidId(prefId) &&
+                       incoming().keys().hasAll(['userId', 'audioPriority', 'autoAudioEnabled', 'preferHardwareDecoder', 'defaultPlayerResizeMode', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'audioPriority', 'autoAudioEnabled', 'preferHardwareDecoder', 'defaultPlayerResizeMode', 'watchHistoryEnabled', 'showFavouriteLiveChannelsFirst', 'createdAt', 'updatedAt']) &&
+                       isValidUserPreferences(incoming());
+      allow update: if isOwner(userId) && isValidId(prefId) &&
+                       isValidUserPreferences(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['audioPriority', 'autoAudioEnabled', 'preferHardwareDecoder', 'defaultPlayerResizeMode', 'watchHistoryEnabled', 'showFavouriteLiveChannelsFirst', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(prefId);
+    }
+
+    match /users/{userId}/categoryVisibility/{docId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(docId);
+      allow create: if isOwner(userId) && isValidId(docId) &&
+                       incoming().keys().hasAll(['userId', 'playlistId', 'liveCategoryIds', 'movieCategoryIds', 'seriesCategoryIds', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'playlistId', 'liveCategoryIds', 'movieCategoryIds', 'seriesCategoryIds', 'createdAt', 'updatedAt']) &&
+                       isValidCategoryVisibility(incoming());
+      allow update: if isOwner(userId) && isValidId(docId) &&
+                       isValidCategoryVisibility(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().playlistId == existing().playlistId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['liveCategoryIds', 'movieCategoryIds', 'seriesCategoryIds', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(docId);
+    }
+
+    match /users/{userId}/favourites/{favId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(favId);
+      allow create: if isOwner(userId) && isValidId(favId) &&
+                       incoming().keys().hasAll(['userId', 'itemId', 'contentType', 'title', 'posterUrl', 'categoryName', 'streamUrl', 'playlistId', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'itemId', 'contentType', 'title', 'posterUrl', 'categoryName', 'streamUrl', 'playlistId', 'createdAt', 'updatedAt']) &&
+                       isValidFavourite(incoming());
+      allow update: if isOwner(userId) && isValidId(favId) &&
+                       isValidFavourite(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['itemId', 'contentType', 'title', 'posterUrl', 'categoryName', 'streamUrl', 'playlistId', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(favId);
+    }
+
+    match /users/{userId}/continueWatching/{progressId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(progressId);
+      allow create: if isOwner(userId) && isValidId(progressId) &&
+                       incoming().keys().hasAll(['userId', 'itemId', 'contentType', 'title', 'subtitle', 'posterUrl', 'streamUrl', 'playlistId', 'seriesId', 'seasonNumber', 'episodeNumber', 'positionMs', 'durationMs', 'preferredAudioLang', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'itemId', 'contentType', 'title', 'subtitle', 'posterUrl', 'streamUrl', 'playlistId', 'seriesId', 'seasonNumber', 'episodeNumber', 'positionMs', 'durationMs', 'preferredAudioLang', 'createdAt', 'updatedAt']) &&
+                       isValidContinueWatching(incoming());
+      allow update: if isOwner(userId) && isValidId(progressId) &&
+                       isValidContinueWatching(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['itemId', 'contentType', 'title', 'subtitle', 'posterUrl', 'streamUrl', 'playlistId', 'seriesId', 'seasonNumber', 'episodeNumber', 'positionMs', 'durationMs', 'preferredAudioLang', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(progressId);
+    }
+
+    match /users/{userId}/watchHistory/{historyId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId) && isValidId(historyId);
+      allow create: if isOwner(userId) && isValidId(historyId) &&
+                       incoming().keys().hasAll(['userId', 'itemId', 'contentType', 'title', 'subtitle', 'posterUrl', 'playlistId', 'watchedAt', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'itemId', 'contentType', 'title', 'subtitle', 'posterUrl', 'playlistId', 'watchedAt', 'createdAt', 'updatedAt']) &&
+                       isValidWatchHistory(incoming());
+      allow update: if isOwner(userId) && isValidId(historyId) &&
+                       isValidWatchHistory(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'subtitle', 'posterUrl', 'playlistId', 'watchedAt', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(historyId);
+    }
+  }
+}
