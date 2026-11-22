@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "604817407213",
+    "project_id": "uh-iptv",
+    "storage_bucket": "uh-iptv.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:604817407213:android:12fbcd5293b7215c1360e4",
+        "android_client_info": {
+          "package_name": "com.aistudio.applet.erzyhr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLqxqXa9CmAUexrMeeYWCp-N1FEpVfSls"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
